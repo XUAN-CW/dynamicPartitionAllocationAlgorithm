@@ -9,8 +9,6 @@
 using namespace std;
 
 
-
-
 struct  freelink {  //空闲区结构
 	int len, address;
 	// len 为分区长度  
