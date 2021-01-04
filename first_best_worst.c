@@ -250,67 +250,59 @@ int Momory_recycle(List *list){
 
 
 int Best_fit(List *list){
-     int min = 0;        //记录 最小分区的结点的大小
-     int base_min = 0;      //记录 最小节点的结点的起始地址
-     List* temp = list; 
-     datatype* item = input();              // 要对 item 的 起始地址  和 分配状态进行初始化
-    
-     while (temp)
-     {
-         //如果分区未分配   就要进行  比较操作， 并且记录差值 和 分区的id号
-         if(temp->node->status == 0 && temp->node->id == -1&& temp->node->size > item->size){
-             if(min == 0){          //加入min为0 表示还未找到一个可以分配的分区
-                 min = temp->node->size;
-                 base_min = temp->node->base;
-             }
-             else
-             {
-                 if(temp->node->size < min){      // 找到一个之后，需要找出最小的分区  也就是它的  size最小。
-                     min = temp->node->size;
-                     base_min = temp->node->base;
-                 }
-             }
-             
-         }
-         if(temp->node->status == 0 && temp->node->id == -1 && temp->node->size == item->size){
-             int base = temp->node->base;
-             temp->node = item;
-             temp->node->status = 1;
-             temp->node->base = base;
-             return 1;
-         }
-        temp = temp->next;
-     }
+	datatype* item = input();              // 要对 item 的 起始地址  和 分配状态进行初始化
 
-     //因为可能没有任何一个空间可以满足要求需要做一个判断处理   
-     temp = list;
-     while (temp)
-     {
-         if(temp->node->base == base_min){
+	List* MaximumUnallocatedPartition = NULL;
+	List* temp = list;
+	for (; temp; temp = temp->next){
+		//如果分区未分配且可以满足需要的空间，就要进行比较操作
+		if (temp->node->status == 0 && temp->node->id == -1){
+			//第一次找到未分配分区
+			if (NULL == MaximumUnallocatedPartition){
+				MaximumUnallocatedPartition = temp;
+			}
+			else{
+				//不是第一次找到可用分区 MaximumUnallocatedPartition 已指向某个节点
+				//将指向的节点与 MaximumUnallocatedPartition 比较，MaximumUnallocatedPartition 指向 size 大的节点
+				MaximumUnallocatedPartition = temp->node->size > MaximumUnallocatedPartition->node->size ? temp : MaximumUnallocatedPartition;
+			}
+		}
+	}
 
-            datatype* temp_node = (datatype*)malloc(sizeof(datatype));      //会有多余的空间多出来  所以需要在建立一个结点插入到链表中
-            temp_node->id = -1;
-            temp_node->status = 0;
-            temp_node->base = base_min + item->size;
-            temp_node->size = temp->node->size - item->size;
-
-            temp->node = item;                          //对item进行完整的初始化
-            temp->node->base = base_min;
-            temp->node->status = 1;
-            
-            List* temp_list_node = (List*)malloc(sizeof(List));         //新申请一个 链表的结点 并且初始化
-            temp_list_node->node = temp_node;
-            temp_list_node->front = temp;
-            temp_list_node->next = temp->next;
-            if(temp->next != NULL){
-                temp->next->front = temp_list_node;
-            }
-            temp->next = temp_list_node;
-            return 1;
-         }
-         temp = temp->next;
-     }
-       
+	if (NULL == MaximumUnallocatedPartition)//空间分配完毕，一个未分配分区都找不到
+	{
+		return 0;
+	}
+	if (MaximumUnallocatedPartition->node->size < item->size)//// 最大为分配分区小于需要的空间
+	{
+		return 0;
+	}
+	else if(MaximumUnallocatedPartition->node->size == item->size){// 最大为分配分区恰好等于需要的空间
+		MaximumUnallocatedPartition->node->id = item->id;
+		MaximumUnallocatedPartition->node->status = 1;
+		return 1;
+	}
+	else{//最大为分配分区大于需要的空间
+		//处理剩余空间，生成剩余空间节点
+		List* residualSpaceNode = (List*)malloc(sizeof(List));         //新申请一个链表的结点并初始化
+		residualSpaceNode->node = (datatype*)malloc(sizeof(datatype));
+		residualSpaceNode->node->id = -1;
+		residualSpaceNode->node->status = 0;
+		residualSpaceNode->node->base = MaximumUnallocatedPartition->node->base + item->size;
+		residualSpaceNode->node->size = MaximumUnallocatedPartition->node->size - item->size;
+		//分配空间
+		MaximumUnallocatedPartition->node->status = 1;
+		MaximumUnallocatedPartition->node->id = item->id;
+		MaximumUnallocatedPartition->node->size = item->size;
+		//插入剩余空间节点
+		residualSpaceNode->front = MaximumUnallocatedPartition;
+		residualSpaceNode->next = MaximumUnallocatedPartition->next;
+		if (MaximumUnallocatedPartition->next != NULL){
+			MaximumUnallocatedPartition->next->front = residualSpaceNode;
+		}
+		MaximumUnallocatedPartition->next = residualSpaceNode;
+		return 1;
+	}
  }
 
 
