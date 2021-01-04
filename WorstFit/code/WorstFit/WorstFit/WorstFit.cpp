@@ -1,6 +1,15 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
+#include <Windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+#include <conio.h>
 using namespace std;
+
+
+
 
 struct  freelink {  //空闲区结构
 	int len, address;
@@ -18,7 +27,7 @@ struct QueueNode { //链表结构
 	struct QueueNode* next;
 };
 
-typedef struct {  //队列结构
+typedef struct LinkQueue{  //队列结构
 	QueueNode* front; //队头
 	QueueNode* rear;  //队尾
 }LinkQueue;
@@ -26,66 +35,25 @@ typedef struct {  //队列结构
 //全局
 LinkQueue* q_free; //自由链头结点
 LinkQueue* q_busy; //占用链头结点
+int max = 640;
 
-void requireMemo(char  name, int  require); /* 模拟内存分配 */
-void freeMemo(char name); /* 模拟内存回收 */
-int past(int time);   /* 模拟系统过了 time 时间 */
-void printlink(LinkQueue* tempQ);
-bool IsEmptyQueue(LinkQueue* q); //队列判空
-void InitQueue(LinkQueue* q);    //分配内存
-void InsertQueueNode(LinkQueue* q, struct busylink tempNode); //入队
-
-void start()   /* 设置系统初始状态*/
-{
-	InitQueue(q_free);
-	InitQueue(q_busy);
-
-	//初始化操作系统占用64k后空闲链表状态
-	struct QueueNode* p = (QueueNode*)malloc(sizeof(QueueNode));
-	p->Node.address = 64; //操作系统占用0~63K空间，所以目前空闲区始址为64
-	p->Node.len = 640 - 64;  //空闲区大小为640-64
-	InsertQueueNode(q_free, p->Node);
-
-	//初始化操作系统占用64k后占用链表状态
-	struct QueueNode* q = (QueueNode*)malloc(sizeof(QueueNode));
-	q->Node.name = 'S';
-	q->Node.address = 0; //起初占用表始址为0
-	q->Node.len = 64;   //操作系统占用64k
-	InsertQueueNode(q_busy, q->Node);
+bool IsEmptyQueue(LinkQueue* q) { //判空
+	if (q->front == q->rear)
+		return true;
+	return false;
 }
 
-int main()
-{
-	q_free = (LinkQueue*)malloc(sizeof(LinkQueue));  /* 创建自由链头结点  */
-	q_busy = (LinkQueue*)malloc(sizeof(LinkQueue)); /* 创建占用链头结点  */
+void InsertQueueNode(LinkQueue* q, struct busylink tempNode) { //插入结点
+	QueueNode* P = (QueueNode*)malloc(sizeof(QueueNode));
+	P->Node = tempNode;
+	P->next = NULL;
+	q->rear->next = P;
+	q->rear = P;
+}
 
-	start();
-	past(5);
-	printf("t1时刻后：\n");
-	requireMemo('A', 8);
-	requireMemo('B', 16);
-	requireMemo('C', 64);
-	requireMemo('D', 124);
-	printlink(q_free);
-
-	past(5);
-	printf("t2时刻后：\n");
-	freeMemo('C');
-	printlink(q_free);
-
-	past(5);
-	printf("t3时刻后：\n");
-	//requireMemo('E', 50);
-	requireMemo('E', 364);
-	printlink(q_free);
-
-	past(5);
-	printf("t4时刻后：\n");
-	freeMemo('D');
-	printlink(q_free);
-
-	system("pause");
-	return 0;
+void InitQueue(LinkQueue* q) { //初始化头结点
+	q->front = q->rear = (QueueNode*)malloc(sizeof(QueueNode));
+	q->front->next = NULL;
 }
 
 void requireMemo(char name, int require) /* 模拟内存分配 */
@@ -191,21 +159,98 @@ void printlink(LinkQueue* q) //打印
 	printf("\n");
 }
 
-void InitQueue(LinkQueue* q) { //初始化头结点
-	q->front = q->rear = (QueueNode*)malloc(sizeof(QueueNode));
-	q->front->next = NULL;
+void myprintlink() //打印
+{
+	struct QueueNode* free = q_free->front->next;
+	while (free) {
+		printf("  空闲大小%d 起始地址%d\n", free->Node.len, free->Node.address);
+		free = free->next;
+	}
+
+	struct QueueNode* busy = q_busy->front->next;
+	while (busy) {
+		printf("进程%c已用大小%d 起始地址%d\n", busy->Node.name, busy->Node.len, busy->Node.address);
+		busy = busy->next;
+	}
+
+	//printf("[][][][][][][][][][][]\n");
+	///*** 设置文字颜色 **
+	//* 0-黑 1-蓝 2-绿 3-浅绿 4-红 5-紫 6-黄 7-白 8-灰 9-淡蓝
+	//* 10-淡绿 11-淡浅绿  12-淡红 13-淡紫 14-淡黄 15-亮白
+	//*/
+	//HANDLE std_output_handle;
+	//std_output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	//SetConsoleTextAttribute(std_output_handle, 0x0A);
+	//printf("A A A A A A A A A A A \n");
+	//std_output_handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	//SetConsoleTextAttribute(std_output_handle, 0xF0);
+
 }
 
-bool IsEmptyQueue(LinkQueue* q) { //判空
-	if (q->front == q->rear)
-		return true;
-	return false;
+
+
+
+
+
+void start()   /* 设置系统初始状态*/
+{
+	InitQueue(q_free);
+	InitQueue(q_busy);
+
+	//初始化操作系统占用64k后空闲链表状态
+	struct QueueNode* p = (QueueNode*)malloc(sizeof(QueueNode));
+	p->Node.address = 64; //操作系统占用0~63K空间，所以目前空闲区始址为64
+	p->Node.len = max - 64;  //空闲区大小为640-64
+	InsertQueueNode(q_free, p->Node);
+
+	//初始化操作系统占用64k后占用链表状态
+	struct QueueNode* q = (QueueNode*)malloc(sizeof(QueueNode));
+	q->Node.name = 'S';
+	q->Node.address = 0; //起初占用表始址为0
+	q->Node.len = 64;   //操作系统占用64k
+	InsertQueueNode(q_busy, q->Node);
 }
 
-void InsertQueueNode(LinkQueue* q, struct busylink tempNode) { //插入结点
-	QueueNode* P = (QueueNode*)malloc(sizeof(QueueNode));
-	P->Node = tempNode;
-	P->next = NULL;
-	q->rear->next = P;
-	q->rear = P;
+
+
+
+int main()
+{
+	q_free = (LinkQueue*)malloc(sizeof(LinkQueue));  /* 创建自由链头结点  */
+	q_busy = (LinkQueue*)malloc(sizeof(LinkQueue)); /* 创建占用链头结点  */
+
+		/*** 设置文字颜色 **
+		* 0-黑 1-蓝 2-绿 3-浅绿 4-红 5-紫 6-黄 7-白 8-灰 9-淡蓝
+		* 10-淡绿 11-淡浅绿  12-淡红 13-淡紫 14-淡黄 15-亮白
+		*/
+
+	start();
+	past(5);
+	printf("t1时刻后：\n");
+	requireMemo('A', 88);
+	requireMemo('B', 16);
+	requireMemo('C', 64);
+	requireMemo('D', 124);
+	printlink(q_free);
+
+	past(5);
+	printf("t2时刻后：\n");
+	freeMemo('C');
+	printlink(q_free);
+
+	past(5);
+	printf("t3时刻后：\n");
+	//requireMemo('E', 50);
+	requireMemo('E', 364);
+	printlink(q_free);
+
+	past(5);
+	printf("t4时刻后：\n");
+	freeMemo('D');
+	printlink(q_free);
+
+	myprintlink();
+
+	system("pause");
+	return 0;
 }
