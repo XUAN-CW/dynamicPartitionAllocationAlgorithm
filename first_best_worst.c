@@ -46,25 +46,19 @@ void Momery_state(List *list){
     List* temp = list;
     printf("-----------------------------------\n");
     printf("内存分配状况\n");
-    printf("-----------------------------------\n");
+        	printf("分区号\t起始\t大小\t状态\t\n"); 
     while (temp)
     {
         if(temp->node->status == 0 && temp->node->id == -1){
-            printf("分区号：FREE\n");
-            printf("起始地址：%d\n",temp->node->base);
-            printf("内存大小：%d\n",temp->node->size);
-            printf("分区状态：空闲\n");
+        	printf("FREE\t%d\t%d\t空闲\n",temp->node->base,temp->node->size);
         }
         else
         {
-            printf("分区号：%d\t起始地址：%d\n",temp->node->id,temp->node->base);
-            printf("内存大小：%d\n",temp->node->size);
-            printf("分区状态：已分配\n");
+        	printf("%d\t%d\t%d\t占用\n",temp->node->id,temp->node->base,temp->node->size);
         }
-        printf("-----------------------------------\n");
         temp = temp->next;
     }
-
+    printf("-----------------------------------\n");  
 }
 
 int First_fit(List *list){
@@ -307,31 +301,37 @@ int Best_fit(List *list){
 
 
 int main(){
-    printf("分区模拟\n");
     List list = init();
     int select;
     int insert_state,recycle_state;
     int insert_state_best;
     do
     {
+    	Momery_state(&list);
         printf("请输入要进行的操作\n");
-        printf("1-首次适应算法， 2-最佳适应算法， 3-内存回收， 4-显示内存状况， 5-退出\n");
+        printf("1-首次适应算法， 2-最佳适应算法， 3-内存回收， 5-退出\n");
         scanf("%d",&select);
+        
+        
         switch (select)
         {
         case 1:              // 1. 首次适应算法
             insert_state = First_fit(&list);
+			system("cls"); 
             if(insert_state == 0){
                 printf("分配失败\n");
             }
             else {
                 printf("分配成功！\n");
+        
             }     
             break;
         case 2:             // 2. 最佳适应算法
             insert_state_best = Best_fit(&list);
+			system("cls"); 
             if(insert_state_best == 1){
                 printf("分配成功\n");
+                
             }    
             else  {
                 printf("分配失败\n");
@@ -339,16 +339,15 @@ int main(){
             break;
         case 3:             //3.内存回收
             recycle_state = Momory_recycle(&list);
+			system("cls"); 
             if(recycle_state == 1){
                 printf("回收成功！\n");
+                
             }
             else{
                 printf("回收失败\n");
             }
             break;
-        case 4:             //4.显示内存状况
-            Momery_state(&list);
-            break;          
         }
     } while (select != 5);
 
