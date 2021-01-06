@@ -371,6 +371,7 @@ int main(){
     int select;
     int insert_state,recycle_state;
     int insert_state_best;
+    printf("ÄÚ´æ·ÖÅä\n"); 
     do
     {
     	Momery_state(&list);
@@ -424,5 +425,5 @@ int main(){
         }
     } while (select != 5);
 
-    system("pause");
+    //system("pause");
 }
