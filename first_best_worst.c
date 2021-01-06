@@ -42,6 +42,7 @@ datatype* input(){          //初始化打算申请的内存分区节点
     item->status = 0;
     return item;
 }
+
 void Momery_state(List *list){
     List* temp = list;
     printf("-----------------------------------\n");
@@ -59,69 +60,6 @@ void Momery_state(List *list){
         temp = temp->next;
     }
     printf("-----------------------------------\n");  
-}
-
-int First_fit(List *list){
-    datatype* item = input();
-    List* temp = list;                      //定义一个临时变量list* ，指向list
-
-    while (temp)
-    {
-
-        if(temp->node->status == 0 && temp->node->size > item->size){       //如果此前的分区未分配，，并且分区大小大于 请求分配的大小     那么此时就可以进行分配
-            List *front = temp->front;                                          //存储当前未分配分区的 上一个分区地址
-            List *next = temp->next;                                          //存储当前未分配分区的  下一个分区地址   
-            int base = temp->node->base;                                      //记录未分配当前分区的首地址
-
-            datatype* new_node = (datatype*)malloc(sizeof(datatype));          // 多余出来的部分要新建立一个分区
-            new_node->id = -1;                                                 //然后需要对这个新的分区进行一些信息的设置
-            new_node->size = temp->node->size - item->size;         //新分区的大小  等于  还未分配的时的分区大小 - 请求分配的结点的大小 
-
-            temp->node = item;                                  //对请求分配的分区结点进行分配
-            temp->node->status = 1;
-
-            new_node->status = 0;
-            new_node->base = base + temp->node->size;             //新建立分区的首地址是  请求分配的分区的首地址 + 请求分配的分区的大小
-
-
-            List* temp_next = (List*)malloc(sizeof(List));           //临时节点 （申请一个新的链表节点 表示下一个分区）  并且进行初始化
-            temp_next->node = new_node;                             //保存下一个的分区的信息
-            temp_next->front = temp_next->next = NULL;                                    
-
-            if(front == NULL && next == NULL){                      //如果 front和next节点都是空，表明它是第一次分配分区
-                temp->node->base = 0;                               //初始化首地址
-                temp->next = temp_next;                     
-                temp_next->front = temp;
-            }
-             if(front == NULL && next != NULL){                 //在第一个分区中插入新的分区
-                 temp->node->base = 0;
-                 temp->node->status = 1;
-                temp_next->next = temp->next;
-                temp->next = temp_next;
-             }
-            if(front != NULL){                      //表明不是第一次分配节点，此时需要在中间插入下一个节点
-                temp->node->base = temp->front->node->base+temp->front->node->size;        //初始化首地址
-                temp_next->next = temp->next;                                       //保证新插入的节点会记录原先节点的下一个节点的首地址
-                temp_next->front = temp;                               // 首尾都需要保证
-                temp->next = temp_next;                             //最后让所申请的分区节点的下一个节点指向  我们刚刚建立的临时节点
-            }
-            return 1;
-        }   
-        else if(temp->node->status == 0 && temp->node->size == item->size)
-        {
-            item->base = temp->front->node->base+temp->front->node->size;               //新插入分区的首地址  等于上一个分区的 首地址+分区的大小
-            item->status = 1;                                           //表示已经分配
-            temp->node = item;
-
-            return 1;
-        }
-        else{
-            temp = temp->next;
-            continue;
-        }
-        temp = temp->next;
-    }
-    return 0;
 }
 
 int Momory_recycle(List *list){
@@ -242,8 +180,136 @@ int Momory_recycle(List *list){
     return 0;
  }
 
+int First_fit(List *list){
+    datatype* item = input();
+    List* temp = list;                      //定义一个临时变量list* ，指向list
+
+    while (temp)
+    {
+
+        if(temp->node->status == 0 && temp->node->size > item->size){       //如果此前的分区未分配，，并且分区大小大于 请求分配的大小     那么此时就可以进行分配
+            List *front = temp->front;                                          //存储当前未分配分区的 上一个分区地址
+            List *next = temp->next;                                          //存储当前未分配分区的  下一个分区地址   
+            int base = temp->node->base;                                      //记录未分配当前分区的首地址
+
+            datatype* new_node = (datatype*)malloc(sizeof(datatype));          // 多余出来的部分要新建立一个分区
+            new_node->id = -1;                                                 //然后需要对这个新的分区进行一些信息的设置
+            new_node->size = temp->node->size - item->size;         //新分区的大小  等于  还未分配的时的分区大小 - 请求分配的结点的大小 
+
+            temp->node = item;                                  //对请求分配的分区结点进行分配
+            temp->node->status = 1;
+
+            new_node->status = 0;
+            new_node->base = base + temp->node->size;             //新建立分区的首地址是  请求分配的分区的首地址 + 请求分配的分区的大小
+
+
+            List* temp_next = (List*)malloc(sizeof(List));           //临时节点 （申请一个新的链表节点 表示下一个分区）  并且进行初始化
+            temp_next->node = new_node;                             //保存下一个的分区的信息
+            temp_next->front = temp_next->next = NULL;                                    
+
+            if(front == NULL && next == NULL){                      //如果 front和next节点都是空，表明它是第一次分配分区
+                temp->node->base = 0;                               //初始化首地址
+                temp->next = temp_next;                     
+                temp_next->front = temp;
+            }
+             if(front == NULL && next != NULL){                 //在第一个分区中插入新的分区
+                 temp->node->base = 0;
+                 temp->node->status = 1;
+                temp_next->next = temp->next;
+                temp->next = temp_next;
+             }
+            if(front != NULL){                      //表明不是第一次分配节点，此时需要在中间插入下一个节点
+                temp->node->base = temp->front->node->base+temp->front->node->size;        //初始化首地址
+                temp_next->next = temp->next;                                       //保证新插入的节点会记录原先节点的下一个节点的首地址
+                temp_next->front = temp;                               // 首尾都需要保证
+                temp->next = temp_next;                             //最后让所申请的分区节点的下一个节点指向  我们刚刚建立的临时节点
+            }
+            return 1;
+        }   
+        else if(temp->node->status == 0 && temp->node->size == item->size)
+        {
+            item->base = temp->front->node->base+temp->front->node->size;               //新插入分区的首地址  等于上一个分区的 首地址+分区的大小
+            item->status = 1;                                           //表示已经分配
+            temp->node = item;
+
+            return 1;
+        }
+        else{
+            temp = temp->next;
+            continue;
+        }
+        temp = temp->next;
+    }
+    return 0;
+}
+
 
 int Best_fit(List *list){
+     int min = 0;        //记录 最小分区的结点的大小
+     int base_min = 0;      //记录 最小节点的结点的起始地址
+     List* temp = list; 
+     datatype* item = input();              // 要对 item 的 起始地址  和 分配状态进行初始化
+    
+     while (temp)
+     {
+         //如果分区未分配   就要进行  比较操作， 并且记录差值 和 分区的id号
+         if(temp->node->status == 0 && temp->node->id == -1&& temp->node->size > item->size){
+             if(min == 0){          //加入min为0 表示还未找到一个可以分配的分区
+                 min = temp->node->size;
+                 base_min = temp->node->base;
+             }
+             else
+             {
+                 if(temp->node->size < min){      // 找到一个之后，需要找出最小的分区  也就是它的  size最小。
+                     min = temp->node->size;
+                     base_min = temp->node->base;
+                 }
+             }
+             
+         }
+         if(temp->node->status == 0 && temp->node->id == -1 && temp->node->size == item->size){
+             int base = temp->node->base;
+             temp->node = item;
+             temp->node->status = 1;
+             temp->node->base = base;
+             return 1;
+         }
+        temp = temp->next;
+     }
+
+     //因为可能没有任何一个空间可以满足要求需要做一个判断处理   
+     temp = list;
+     while (temp)
+     {
+         if(temp->node->base == base_min){
+
+            datatype* temp_node = (datatype*)malloc(sizeof(datatype));      //会有多余的空间多出来  所以需要在建立一个结点插入到链表中
+            temp_node->id = -1;
+            temp_node->status = 0;
+            temp_node->base = base_min + item->size;
+            temp_node->size = temp->node->size - item->size;
+
+            temp->node = item;                          //对item进行完整的初始化
+            temp->node->base = base_min;
+            temp->node->status = 1;
+            
+            List* temp_list_node = (List*)malloc(sizeof(List));         //新申请一个 链表的结点 并且初始化
+            temp_list_node->node = temp_node;
+            temp_list_node->front = temp;
+            temp_list_node->next = temp->next;
+            if(temp->next != NULL){
+                temp->next->front = temp_list_node;
+            }
+            temp->next = temp_list_node;
+            return 1;
+         }
+         temp = temp->next;
+     }
+       
+ }
+
+
+int Worst_Fit(List *list){
 	datatype* item = input();              // 要对 item 的 起始地址  和 分配状态进行初始化
 
 	List* MaximumUnallocatedPartition = NULL;
@@ -309,7 +375,7 @@ int main(){
     {
     	Momery_state(&list);
         printf("请输入要进行的操作\n");
-        printf("1-首次适应算法， 2-最佳适应算法， 3-内存回收， 5-退出\n");
+        printf("1-首次适应算法， 2-最佳适应算法，3-最坏适应算法， 4-内存回收， 5-退出\n");
         scanf("%d",&select);
         
         
@@ -323,7 +389,6 @@ int main(){
             }
             else {
                 printf("分配成功！\n");
-        
             }     
             break;
         case 2:             // 2. 最佳适应算法
@@ -331,18 +396,26 @@ int main(){
 			system("cls"); 
             if(insert_state_best == 1){
                 printf("分配成功\n");
-                
             }    
             else  {
                 printf("分配失败\n");
             }        
             break;
-        case 3:             //3.内存回收
+        case 3:             
+            insert_state_best = Worst_Fit(&list);
+			system("cls"); 
+            if(insert_state_best == 1){
+                printf("分配成功\n");
+            }    
+            else  {
+                printf("分配失败\n");
+            }        
+            break;
+        case 4:             //3.内存回收
             recycle_state = Momory_recycle(&list);
 			system("cls"); 
             if(recycle_state == 1){
                 printf("回收成功！\n");
-                
             }
             else{
                 printf("回收失败\n");
